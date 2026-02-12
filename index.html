@@ -3,200 +3,308 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KIRIN LED - FTC Driver & Utilities</title>
+    <title>KIRIN - Advanced LED for FIRST</title>
+    <!-- 引入 Google Fonts 字体，增加科技感 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Orbitron:wght@900&display=swap" rel="stylesheet">
+    
     <style>
+        /* --- 全局设置 --- */
         :root {
-            --primary-color: #00ff88; /* 科技绿，类似LED光 */
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #ffffff;
-            --secondary-text: #b0b0b0;
+            --primary-glow: #00ff88;
+            --secondary-glow: #ff0055;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-sub: #cccccc;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
             margin: 0;
             padding: 0;
+            background-color: #000; /* 纯黑背景配合你的图片 */
+            color: var(--text-main);
+            font-family: 'Montserrat', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* --- 顶部导航 (Logo) --- */
+        nav {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .brand-logo {
+            height: 50px; /* Logo高度 */
+            width: auto;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        /* --- 主视觉区域 (Hero Section) --- */
+        .hero {
+            height: 100vh;
+            width: 100%;
             display: flex;
             flex-direction: column;
+            justify-content: center;
             align-items: center;
-            min-height: 100vh;
-        }
-
-        header {
             text-align: center;
-            padding: 40px 20px;
-            width: 100%;
-            max-width: 800px;
+            position: relative;
+            /* 背景图设置 */
+            background-image: url('Kirin%20(6).png'); 
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: contain; /* 保证图片完整显示 */
         }
 
-        .logo {
-            max-width: 150px;
-            height: auto;
-            margin-bottom: 20px;
-            border-radius: 10px;
+        /* 增加一个遮罩层，防止背景太亮影响文字（可选，目前设为透明） */
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 40%, #000 90%);
+            z-index: 1;
+        }
+
+        .hero-content {
+            z-index: 10;
+            margin-top: 100px; /* 稍微下移，配合图片重心 */
+            animation: fadeInUp 1.5s ease-out;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.8); /* 增加文字阴影确保清晰 */
         }
 
         h1 {
+            font-family: 'Orbitron', sans-serif; /* 赛博朋克风格字体 */
+            font-size: clamp(4rem, 15vw, 10rem); /* 响应式超大字体 */
             margin: 0;
-            font-size: 2.5rem;
-            color: var(--primary-color);
+            line-height: 1;
+            letter-spacing: -2px;
+            background: linear-gradient(180deg, #fff, #aaa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             text-transform: uppercase;
-            letter-spacing: 2px;
         }
 
         .subtitle {
-            color: var(--secondary-text);
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            letter-spacing: 4px;
+            text-transform: uppercase;
             margin-top: 10px;
-            font-size: 1.1rem;
+            color: var(--text-main);
+            font-weight: 700;
+            opacity: 0.9;
         }
 
-        .container {
+        /* 向下滚动提示 */
+        .scroll-down {
+            position: absolute;
+            bottom: 30px;
+            z-index: 10;
+            color: #666;
+            animation: bounce 2s infinite;
+        }
+
+        /* --- 下载区域 (Glassmorphism) --- */
+        .downloads-section {
+            padding: 80px 20px;
+            background: #050505;
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 这里的背景光晕装饰 */
+        .blob {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(180deg, #7b2cbf, #240046);
+            filter: blur(80px);
+            border-radius: 50%;
+            z-index: 0;
+            opacity: 0.4;
+        }
+        .blob-1 { top: 10%; left: 10%; }
+        .blob-2 { bottom: 10%; right: 10%; background: linear-gradient(180deg, #00ff88, #006400); }
+
+        .cards-container {
+            display: flex;
+            gap: 40px;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 20px;
-            padding: 20px;
-            max-width: 1000px;
+            z-index: 1;
+            max-width: 1200px;
             width: 100%;
         }
 
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 30px;
-            width: 300px;
-            text-align: center;
-            transition: transform 0.2s, box-shadow 0.2s;
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 40px;
+            width: 350px;
+            transition: all 0.4s ease;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            align-items: flex-start;
         }
 
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 255, 136, 0.1);
-            border-color: var(--primary-color);
+        .glass-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
         }
 
-        .card h2 {
-            margin-top: 0;
-            color: #fff;
+        .card-type {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--primary-glow);
+            margin-bottom: 10px;
+            font-weight: bold;
         }
 
-        .card p {
-            color: var(--secondary-text);
-            font-size: 0.95rem;
-            line-height: 1.5;
+        .glass-card h2 {
+            margin: 0 0 15px 0;
+            font-size: 1.8rem;
+        }
+
+        .glass-card p {
+            color: var(--text-sub);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
             flex-grow: 1;
         }
 
-        .btn {
-            display: inline-block;
-            background-color: var(--primary-color);
-            color: #000;
-            padding: 12px 24px;
+        .download-btn {
             text-decoration: none;
-            border-radius: 6px;
+            color: #000;
+            background: #fff;
+            padding: 15px 30px;
+            border-radius: 30px;
             font-weight: bold;
-            margin-top: 20px;
-            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+            width: 100%;
+            justify-content: center;
         }
 
-        .btn:hover {
-            background-color: #00cc6a;
-            cursor: pointer;
+        .download-btn:hover {
+            background: var(--primary-glow);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
         }
 
-        .icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-        }
-
-        .instruction-section {
-            background-color: #1a1a1a;
-            padding: 30px;
-            margin-top: 40px;
-            border-radius: 12px;
-            max-width: 800px;
-            width: 90%;
-            border-left: 4px solid var(--primary-color);
-        }
-
-        code {
-            background-color: #333;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'Courier New', Courier, monospace;
-            color: var(--primary-color);
-        }
-
+        /* --- 底部 --- */
         footer {
-            margin-top: auto;
-            padding: 40px;
             text-align: center;
-            color: #666;
+            padding: 40px;
+            background: #000;
+            color: #444;
             font-size: 0.8rem;
+            border-top: 1px solid #111;
         }
 
-        /* 针对手机端的优化 */
-        @media (max-width: 600px) {
-            .container {
-                flex-direction: column;
-                align-items: center;
-            }
-            .card {
-                width: 100%;
-                max-width: 320px;
-            }
+        /* --- 动画 Keyframes --- */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+
+        /* 手机适配 */
+        @media (max-width: 768px) {
+            nav { justify-content: center; padding: 20px; }
+            .hero { background-size: cover; background-position: center; }
+            .hero-content { margin-top: 0; }
+            h1 { font-size: 15vw; }
+            .subtitle { font-size: 3vw; letter-spacing: 1px; }
+            .glass-card { width: 100%; }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <!-- 这里的src使用了你提供的图片文件名 -->
-        <img src="96507b78b3b3e62f9de351ea397a7a51.png" alt="BYNX Logo" class="logo">
-        <h1>KIRIN LED</h1>
-        <div class="subtitle">
-            专为FIRST赛事打造的高性能LED模块<br>
-            制造商: FTC Team 27570 | 发行商: BYNX
-        </div>
-    </header>
+    <nav>
+        <!-- 替换为你的发行商LOGO -->
+        <img src="96507b78b3b3e62f9de351ea397a7a51.png" alt="BYNX Logo" class="brand-logo">
+    </nav>
 
-    <div class="container">
-        <!-- 驱动下载卡片 -->
-        <div class="card">
-            <div class="icon">⚙️</div>
-            <h2>核心驱动</h2>
-            <p>包含 <code>LedModuleDriver.java</code>。<br>这是控制 KIRIN LED 硬件的底层 I2C 驱动程序，必须将其导入到你的 TeamCode 中。</p>
-            <a href="LedModuleDriver.java" download class="btn">下载驱动文件</a>
+    <!-- 主视觉区域 -->
+    <section class="hero">
+        <div class="hero-content">
+            <!-- 对应海报上的文字，使用 Orbitron 字体实现科技感 -->
+            <h1>KIRIN</h1>
+            <div class="subtitle">HIGHLY FLEXIBLE LED LIGHTS SUITABLE FOR FIRST</div>
         </div>
+        <div class="scroll-down">↓ SCROLL TO DOWNLOAD</div>
+    </section>
 
-        <!-- 示例程序卡片 -->
-        <div class="card">
-            <div class="icon">💡</div>
-            <h2>示例 OpMode</h2>
-            <p>包含 <code>LedDemoOpMode.java</code>。<br>一个 TeleOp 示例程序，展示了如何调用驱动来控制灯光颜色和闪烁模式。</p>
-            <a href="LedDemoOpMode.java" download class="btn">下载示例代码</a>
+    <!-- 下载区域 -->
+    <section class="downloads-section">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+
+        <div class="cards-container">
+            <!-- 驱动卡片 -->
+            <div class="glass-card">
+                <span class="card-type">Hardware Driver</span>
+                <h2>Module Driver</h2>
+                <p>KIRIN LED 核心驱动程序。提供底层 I2C 通信接口，支持颜色设置、模式切换及状态反馈。</p>
+                <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; margin-bottom: 20px; font-family: monospace; font-size: 0.75rem; color: #888;">
+                    LedModuleDriver.java
+                </div>
+                <a href="LedModuleDriver.java" download class="download-btn">
+                    <span>Download Driver</span>
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                </a>
+            </div>
+
+            <!-- 示例卡片 -->
+            <div class="glass-card">
+                <span class="card-type">Example Code</span>
+                <h2>Demo OpMode</h2>
+                <p>FTC TeleOp 示例程序。展示如何在 OpMode 中初始化设备、调用灯光特效以及处理异常。</p>
+                <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; margin-bottom: 20px; font-family: monospace; font-size: 0.75rem; color: #888;">
+                    LedDemoOpMode.java
+                </div>
+                <a href="LedDemoOpMode.java" download class="download-btn">
+                    <span>Download Example</span>
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                </a>
+            </div>
         </div>
-    </div>
-
-    <!-- 安装说明部分 -->
-    <div class="instruction-section">
-        <h3>📂 如何安装</h3>
-        <p>1. 点击上方按钮下载两个 <code>.java</code> 文件。</p>
-        <p>2. 将它们复制到你的 FTC SDK 项目文件夹中，路径通常为：</p>
-        <p><code>TeamCode/src/main/java/org/firstinspires/ftc/teamcode/</code></p>
-        <p>3. 在 Android Studio 或 OnBot Java 中重新构建项目 (Build)，即可在 Driver Station 的 TeleOp 列表中找到示例程序。</p>
-    </div>
+    </section>
 
     <footer>
-        <p>&copy; 2024-2026 BYNX & FTC Team 27570. All Rights Reserved.</p>
-        <p>Project KIRIN - Lighting up the field.</p>
+        <p>MANUFACTURED BY <strong>FTC TEAM 27570</strong> | PUBLISHED BY <strong>BYNX</strong></p>
+        <p style="opacity: 0.5; font-size: 0.7rem;">&copy; 2024 KIRIN PROJECT</p>
     </footer>
 
 </body>
