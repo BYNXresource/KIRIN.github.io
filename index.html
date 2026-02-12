@@ -3,325 +3,493 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KIRIN - Advanced LED for FIRST</title>
+    <title>KIRIN | STM32 LED Driver V2</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- 引入 Montserrat 字体，使用 900 字重 (Black) 来实现极粗的工业感 -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- 引入 JetBrains Mono (代码) 和 Inter (UI) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
+        /* --- 核心变量 --- */
         :root {
-            --primary-green: #00ff88;
-            --glass-bg: rgba(20, 20, 20, 0.6);
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --neon-green: #00ff9d;
+            --neon-blue: #00b8ff;
+            --neon-purple: #bd00ff;
+            --bg-dark: #050505;
+            --bg-card: rgba(20, 20, 20, 0.6);
+            --border: rgba(255, 255, 255, 0.1);
             --text-main: #ffffff;
-            --text-sub: #aaaaaa;
+            --text-muted: #888888;
         }
 
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            margin: 0;
-            background-color: #000;
+            background-color: var(--bg-dark);
             color: var(--text-main);
-            font-family: 'Montserrat', sans-serif; /* 改用更现代的字体 */
+            font-family: 'Inter', sans-serif;
             overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* --- 动态背景效果 --- */
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: 
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-position: center top;
+            transform: perspective(500px) rotateX(60deg) scale(2);
+            transform-origin: top center;
+            opacity: 0.2;
+            z-index: -1;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 1000px; }
+        }
+
+        .glow-orb {
+            position: fixed;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(0, 255, 157, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+            filter: blur(50px);
         }
 
         /* --- 导航栏 --- */
         nav {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 30px 50px;
-            z-index: 100;
-        }
-        .brand-logo {
-            height: 40px;
-            opacity: 0.8;
-        }
-
-        /* --- 主视觉区域 (Hero) --- */
-        .hero {
-            height: 100vh;
-            width: 100%;
-            position: relative;
             display: flex;
-            align-items: center; /* 垂直居中 */
-            justify-content: flex-end; /* 关键：内容向右对齐 */
-            
-            /* 背景图设置 */
-            background-image: url('Kirin%20(6).png'); 
-            /* 让背景图偏向左侧显示，避开右侧文字区域 */
-            background-position: 10% center; 
-            background-repeat: no-repeat;
-            background-size: contain; 
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px 50px;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+        }
+        .logo { height: 40px; }
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-left: 30px;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover { color: var(--neon-green); }
+
+        /* --- Hero Section --- */
+        .hero {
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            position: relative;
         }
 
-        /* 移动端适配背景 */
-        @media (min-width: 1600px) {
-            .hero { background-size: 65%; } /* 大屏时控制背景图大小 */
-        }
-
-        /* 文字容器：位于右侧 */
-        .hero-content {
-            width: 50%; /* 占据屏幕右半边 */
-            padding-right: 5%; /* 右边距 */
-            padding-left: 20px;
-            text-align: left; /* 文字本身左对齐 (向左顶到头) */
-            z-index: 10;
-        }
-
-        /* 大标题设计 */
         h1 {
-            font-size: clamp(3rem, 8vw, 9rem);
-            font-weight: 900; /* 最粗字重 */
-            margin: 0;
-            line-height: 0.9;
-            letter-spacing: -2px; /* 紧凑字间距，更显硬朗 */
-            
-            /* 金属渐变质感 */
-            background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 50%, #ffffff 100%);
+            font-size: clamp(4rem, 10vw, 8rem);
+            font-weight: 800;
+            letter-spacing: -3px;
+            line-height: 1;
+            background: linear-gradient(180deg, #fff, #666);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            
-            /* 稍微加一点投影增加立体感 */
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
-        }
-
-        /* 双语副标题 */
-        .subtitle-en {
-            font-size: clamp(0.9rem, 1.5vw, 1.2rem);
-            letter-spacing: 4px;
-            font-weight: 700;
-            color: #fff;
-            margin-top: 20px;
-            text-transform: uppercase;
+            margin-bottom: 20px;
+            position: relative;
         }
         
-        .subtitle-cn {
-            font-size: clamp(1rem, 1.5vw, 1.4rem);
-            color: var(--primary-green); /* 中文用强调色 */
-            margin-top: 5px;
-            font-weight: 400;
-            letter-spacing: 1px;
+        h1::after {
+            content: 'V2.0';
+            position: absolute;
+            top: 0;
+            right: -60px;
+            font-size: 1.5rem;
+            background: var(--neon-green);
+            color: #000;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transform: rotate(15deg);
+            -webkit-text-fill-color: #000;
         }
 
-        /* --- 下载区域 --- */
-        .downloads-section {
-            background: #080808;
-            padding: 80px 20px;
-            position: relative;
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 40px;
         }
 
-        .section-title {
-            text-align: center;
-            margin-bottom: 60px;
-            font-size: 2rem;
-            color: #333;
-            text-transform: uppercase;
-            letter-spacing: 5px;
+        .cta-group { display: flex; gap: 20px; }
+        
+        .btn {
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .cards-container {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-            max-width: 1200px;
-            margin: 0 auto;
+        .btn-primary {
+            background: var(--neon-green);
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 255, 157, 0.4);
         }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(0, 255, 157, 0.6); }
 
-        .tech-card {
-            background: #111;
-            border: 1px solid #333;
-            border-left: 4px solid var(--primary-green);
-            padding: 40px;
-            width: 400px;
-            transition: transform 0.3s ease, border-color 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .tech-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary-green);
-            background: #161616;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
-        }
-
-        .card-icon {
-            font-size: 2rem;
-            color: var(--primary-green);
-        }
-
-        .tech-card h2 {
-            margin: 0;
-            font-size: 1.8rem;
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
             color: #fff;
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.2); }
+
+        /* --- 交互式 LED 演示区 --- */
+        .demo-section {
+            padding: 100px 0;
+            background: linear-gradient(to bottom, transparent, #080808);
+            text-align: center;
         }
 
-        .tech-card h3 {
-            margin: 5px 0 0 0;
-            font-size: 1rem;
-            color: #666;
-            font-weight: 400;
-        }
-
-        .desc {
-            color: #999;
-            line-height: 1.6;
-            font-size: 0.9rem;
-            margin-bottom: 30px;
-            min-height: 80px;
-        }
-
-        .btn-group {
-            border-top: 1px solid #333;
-            padding-top: 20px;
-        }
-
-        .download-btn {
+        .led-strip-container {
+            width: 90%;
+            max-width: 800px;
+            height: 60px;
+            background: #111;
+            margin: 40px auto;
+            border-radius: 30px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            text-decoration: none;
-            color: #fff;
+            justify-content: space-around;
+            padding: 0 20px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 0 0 2px #333;
+            position: relative;
+        }
+
+        /* LED 灯珠 */
+        .led {
+            width: 20px; height: 20px;
+            background-color: #333; /* 灭灯状态 */
+            border-radius: 50%;
+            box-shadow: 0 0 0 rgba(0,0,0,0);
+            transition: background-color 0.1s, box-shadow 0.1s;
+        }
+
+        .control-panel {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .ctrl-btn {
             background: #222;
-            padding: 15px 20px;
-            border-radius: 4px;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
             transition: all 0.2s;
         }
+        .ctrl-btn:hover { border-color: var(--neon-green); color: var(--neon-green); }
+        .ctrl-btn:active { transform: translateY(2px); }
 
-        .download-btn:hover {
-            background: var(--primary-green);
-            color: #000;
+        /* --- 特性卡片 Grid --- */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 50px 20px;
         }
 
-        .btn-text small {
-            display: block;
-            font-size: 0.7rem;
-            opacity: 0.7;
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 40px;
+            border-radius: 16px;
+            transition: transform 0.3s, border-color 0.3s;
         }
-
-        /* --- 底部 --- */
-        footer {
-            background: #000;
-            padding: 50px;
-            text-align: center;
-            border-top: 1px solid #222;
-            color: #555;
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: var(--neon-green);
+        }
+        .card h3 { font-size: 1.5rem; margin-bottom: 10px; color: #fff; }
+        .card p { color: var(--text-muted); font-size: 0.95rem; }
+        .card .icon { font-size: 2rem; margin-bottom: 20px; color: var(--neon-green); }
+        .code-tag {
+            font-family: 'JetBrains Mono';
             font-size: 0.8rem;
+            background: rgba(0, 255, 157, 0.1);
+            color: var(--neon-green);
+            padding: 2px 6px;
+            border-radius: 4px;
         }
 
-        /* --- 响应式 --- */
-        @media (max-width: 900px) {
-            .hero {
-                justify-content: center; /* 手机上改回居中 */
-                align-items: flex-end; /* 图片在上，文字在下 */
-                background-position: center 20%;
-                background-size: 80%;
-                height: 90vh;
-            }
-            .hero-content {
-                width: 100%;
-                padding: 40px;
-                background: linear-gradient(to top, #000 0%, transparent 100%); /* 增加底部渐变防止文字看不清 */
-                margin-bottom: 40px;
-            }
-            h1 { font-size: 4rem; }
-            .tech-card { width: 100%; }
+        /* --- 代码预览区 --- */
+        .code-showcase {
+            max-width: 900px;
+            margin: 100px auto;
+            background: #1e1e1e;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+        }
+        .code-header {
+            background: #2d2d2d;
+            padding: 10px 20px;
+            display: flex;
+            gap: 8px;
+        }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .red { background: #ff5f56; } .yellow { background: #ffbd2e; } .green { background: #27c93f; }
+        
+        pre {
+            padding: 20px;
+            overflow-x: auto;
+            color: #d4d4d4;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .k-blue { color: #569cd6; }
+        .k-green { color: #6a9955; }
+        .k-purple { color: #c586c0; }
+        .k-yellow { color: #dcdcaa; }
+
+        footer {
+            text-align: center;
+            padding: 60px;
+            color: #444;
+            font-size: 0.8rem;
+            border-top: 1px solid #111;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            h1 { font-size: 15vw; }
+            .led-strip-container { height: 40px; }
+            .led { width: 12px; height: 12px; }
         }
     </style>
 </head>
 <body>
 
+    <!-- 动态背景 -->
+    <div class="bg-grid"></div>
+    <div class="glow-orb" style="top: 20%; left: 20%;"></div>
+    <div class="glow-orb" style="bottom: 10%; right: 10%; background: radial-gradient(circle, rgba(189, 0, 255, 0.1) 0%, transparent 70%);"></div>
+
     <nav>
-        <img src="96507b78b3b3e62f9de351ea397a7a51.png" alt="BYNX" class="brand-logo">
+        <img src="96507b78b3b3e62f9de351ea397a7a51.png" alt="BYNX" class="logo">
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#demo">Demo</a>
+            <a href="https://github.com/KIRIN" target="_blank">GitHub</a>
+        </div>
     </nav>
 
-    <header class="hero">
-        <div class="hero-content">
-            <!-- 标题：KIRIN -->
-            <h1>KIRIN</h1>
-            
-            <!-- 英文副标题 -->
-            <div class="subtitle-en">
-                Highly Flexible LED System<br>Suitable for FIRST Robotics
-            </div>
-            
-            <!-- 中文副标题 -->
-            <div class="subtitle-cn">
-                专为 FIRST 赛事打造的高性能灯光模块
-            </div>
+    <!-- 主视觉 -->
+    <section class="hero">
+        <h1>KIRIN</h1>
+        <div class="subtitle">
+            Advanced STM32 I2C LED & Buzzer Controller<br>
+            专为 FTC 机器人设计的高性能声光反馈模块
         </div>
-    </header>
-
-    <section class="downloads-section">
-        <div class="section-title">Resources / 下载资源</div>
-        
-        <div class="cards-container">
-            
-            <!-- 驱动卡片 -->
-            <div class="tech-card">
-                <div class="card-header">
-                    <div>
-                        <h2>Driver</h2>
-                        <h3>核心驱动程序</h3>
-                    </div>
-                    <div class="card-icon">⚙️</div>
-                </div>
-                <div class="desc">
-                    Includes the core <code>LedModuleDriver.java</code>. This low-level I2C driver handles color mixing, blinking patterns, and status feedback.<br><br>
-                    包含底层 I2C 通信协议，支持颜色混合、呼吸闪烁及状态反馈。
-                </div>
-                <div class="btn-group">
-                    <a href="LedModuleDriver.java" download class="download-btn">
-                        <div class="btn-text">
-                            <strong>Download Driver</strong>
-                            <small>下载 .java 文件</small>
-                        </div>
-                        <span>⬇</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- 示例卡片 -->
-            <div class="tech-card">
-                <div class="card-header">
-                    <div>
-                        <h2>Demo</h2>
-                        <h3>示例应用程序</h3>
-                    </div>
-                    <div class="card-icon">💡</div>
-                </div>
-                <div class="desc">
-                    Includes <code>LedDemoOpMode.java</code>. A complete TeleOp example showing how to initialize the device and trigger lighting effects.<br><br>
-                    完整的 TeleOp 示例代码，展示如何初始化设备、调用灯效以及异常处理。
-                </div>
-                <div class="btn-group">
-                    <a href="LedDemoOpMode.java" download class="download-btn">
-                        <div class="btn-text">
-                            <strong>Download Example</strong>
-                            <small>下载 .java 文件</small>
-                        </div>
-                        <span>⬇</span>
-                    </a>
-                </div>
-            </div>
-
+        <div class="cta-group">
+            <a href="LedModuleDriver.java" download class="btn btn-primary">
+                <span>Download Driver V2</span>
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            </a>
+            <a href="LedDemoOpMode.java" download class="btn btn-secondary">
+                <span>Get OpMode Demo</span>
+            </a>
         </div>
     </section>
 
+    <!-- 交互式模拟区 -->
+    <section id="demo" class="demo-section">
+        <h2 style="font-size: 2rem; margin-bottom: 20px;">Live Simulation / 实时模拟</h2>
+        <p style="color: #666; margin-bottom: 30px;">Click buttons to test the OpMode logic directly in your browser<br>点击下方按钮体验 TeleOp 逻辑</p>
+        
+        <!-- 模拟灯带 -->
+        <div class="led-strip-container" id="ledStrip">
+            <!-- JS会在这里生成灯珠 -->
+        </div>
+
+        <!-- 模拟控制台 -->
+        <div class="control-panel">
+            <button class="ctrl-btn" onclick="setMode('solid-red')">pad1.A (Solid Red)</button>
+            <button class="ctrl-btn" onclick="setMode('solid-green')">pad1.B (Solid Green)</button>
+            <button class="ctrl-btn" onclick="setMode('wave')">pad1.X (Wave Mode)</button>
+            <button class="ctrl-btn" onclick="setMode('strobe')">pad1.Y (Strobe Mode)</button>
+            <button class="ctrl-btn" onclick="setMode('single')">dpad_up (Single LED)</button>
+            <button class="ctrl-btn" onclick="setMode('off')">dpad_down (OFF)</button>
+            <button class="ctrl-btn" onclick="triggerBuzzer()">LB/RB (Beep)</button>
+        </div>
+        <div id="status-text" style="margin-top: 20px; font-family: 'JetBrains Mono'; color: var(--neon-green); min-height: 20px;">>> Ready to start...</div>
+    </section>
+
+    <!-- 特性展示 -->
+    <section id="features" class="features">
+        <div class="card">
+            <div class="icon">🌊</div>
+            <h3>Dual-Color Wave</h3>
+            <p>Creates a smooth breathing animation between two colors.</p>
+            <p style="margin-top:10px; color:#666;">支持双色混合呼吸流水，速度可调。</p>
+            <span class="code-tag">ENTW</span>
+        </div>
+        <div class="card">
+            <div class="icon">🚨</div>
+            <h3>Police Strobe</h3>
+            <p>High-frequency alternating flash pattern for alerts.</p>
+            <p style="margin-top:10px; color:#666;">警灯爆闪模式，分组交替闪烁。</p>
+            <span class="code-tag">ENTST</span>
+        </div>
+        <div class="card">
+            <div class="icon">🔊</div>
+            <h3>Integrated Buzzer</h3>
+            <p>Simultaneous sound feedback via I2C commands.</p>
+            <p style="margin-top:10px; color:#666;">板载蜂鸣器，支持自定义频率和时长。</p>
+            <span class="code-tag">BENT</span>
+        </div>
+        <div class="card">
+            <div class="icon">🆔</div>
+            <h3>Smart ID Assign</h3>
+            <p>Auto-standby after ID assignment (Orange flash on boot).</p>
+            <p style="margin-top:10px; color:#666;">上电橙色闪烁，分配ID后自动进入待机。</p>
+            <span class="code-tag">0x60</span>
+        </div>
+    </section>
+
+    <!-- 代码展示 -->
+    <section class="code-showcase">
+        <div class="code-header">
+            <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+            <span style="margin-left: 10px; color: #888; font-size: 0.8rem;">LedModuleDriver.java (Snippet)</span>
+        </div>
+        <pre>
+<span class="k-purple">public void</span> <span class="k-yellow">setWaveMode</span>(<span class="k-blue">char</span> id, <span class="k-blue">int</span> color1, <span class="k-blue">int</span> color2, <span class="k-blue">int</span> speed) {
+    <span class="k-green">// Seamless I2C Command Generation</span>
+    String cmd = String.format(Locale.US, 
+        <span class="k-green">"%c ENTW %s %s %d%% %d"</span>,
+        id, colorToHex(color1), colorToHex(color2), speed, brightness
+    );
+    sendCommand(cmd);
+}</pre>
+    </section>
+
     <footer>
-        <p>MANUFACTURED BY <strong>FTC TEAM 27570</strong> &nbsp;|&nbsp; PUBLISHED BY <strong>BYNX</strong></p>
-        <p>Copyright &copy; 2026 Project KIRIN. All rights reserved.</p>
+        <p>MANUFACTURED BY <strong>FTC TEAM 27570</strong> | PUBLISHED BY <strong>BYNX</strong></p>
+        <p>Copyright &copy; 2026 KIRIN PROJECT. All Rights Reserved.</p>
     </footer>
 
+    <!-- 交互脚本 -->
+    <script>
+        // 初始化模拟灯带
+        const strip = document.getElementById('ledStrip');
+        const ledCount = 16;
+        let animationInterval = null;
+
+        for(let i=0; i<ledCount; i++) {
+            let led = document.createElement('div');
+            led.className = 'led';
+            led.id = 'led-' + i;
+            strip.appendChild(led);
+        }
+
+        function clearEffects() {
+            if(animationInterval) clearInterval(animationInterval);
+            document.querySelectorAll('.led').forEach(l => {
+                l.style.backgroundColor = '#333';
+                l.style.boxShadow = 'none';
+            });
+        }
+
+        function setMode(mode) {
+            clearEffects();
+            const status = document.getElementById('status-text');
+
+            if (mode === 'solid-red') {
+                status.innerText = ">> Mode: Solid Red (0xFF0000)";
+                document.querySelectorAll('.led').forEach(l => {
+                    l.style.backgroundColor = '#ff0000';
+                    l.style.boxShadow = '0 0 10px #ff0000';
+                });
+            } else if (mode === 'solid-green') {
+                status.innerText = ">> Mode: Solid Green (0x00FF00)";
+                document.querySelectorAll('.led').forEach(l => {
+                    l.style.backgroundColor = '#00ff00';
+                    l.style.boxShadow = '0 0 10px #00ff00';
+                });
+            } else if (mode === 'off') {
+                status.innerText = ">> Mode: OFF (Standby)";
+            } else if (mode === 'single') {
+                status.innerText = ">> Mode: Individual LED 0 (0xFFFFFF)";
+                let l = document.getElementById('led-0');
+                l.style.backgroundColor = '#ffffff';
+                l.style.boxShadow = '0 0 15px #ffffff';
+            } else if (mode === 'wave') {
+                status.innerText = ">> Mode: Ocean Wave (Blue/Cyan)";
+                let offset = 0;
+                animationInterval = setInterval(() => {
+                    offset++;
+                    document.querySelectorAll('.led').forEach((l, index) => {
+                        // 简单的正弦波模拟
+                        let val = Math.sin((index + offset) * 0.5) * 0.5 + 0.5; 
+                        // 插值 Blue (0,0,255) to Cyan (0,255,255)
+                        let g = Math.floor(val * 255);
+                        let col = `rgb(0, ${g}, 255)`;
+                        l.style.backgroundColor = col;
+                        l.style.boxShadow = `0 0 ${val*10}px ${col}`;
+                    });
+                }, 50);
+            } else if (mode === 'strobe') {
+                status.innerText = ">> Mode: Police Strobe (Red/Blue)";
+                let toggle = false;
+                animationInterval = setInterval(() => {
+                    toggle = !toggle;
+                    document.querySelectorAll('.led').forEach((l, index) => {
+                        // 前半部分红，后半部分蓝，交替闪烁
+                        let isRedZone = index < ledCount / 2;
+                        if ((isRedZone && toggle) || (!isRedZone && !toggle)) {
+                            l.style.backgroundColor = '#ff0000';
+                            l.style.boxShadow = '0 0 15px #ff0000';
+                        } else {
+                            l.style.backgroundColor = '#0000ff';
+                            l.style.boxShadow = '0 0 15px #0000ff';
+                        }
+                    });
+                }, 100);
+            }
+        }
+
+        function triggerBuzzer() {
+            const status = document.getElementById('status-text');
+            status.innerText = ">> Buzzer: Beeping (1000Hz)...";
+            // 简单的视觉反馈震动
+            strip.style.transform = "translateX(2px)";
+            setTimeout(() => strip.style.transform = "translateX(-2px)", 50);
+            setTimeout(() => strip.style.transform = "translateX(2px)", 100);
+            setTimeout(() => strip.style.transform = "translateX(0)", 150);
+        }
+    </script>
 </body>
 </html>
